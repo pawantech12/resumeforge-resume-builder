@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import html2pdf from "html2pdf.js";
 import { Download, MoreHorizontal, Pencil, Trash } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -49,6 +48,9 @@ export function ResumeCard({ resume }) {
     try {
       if (!resumeRef.current) return;
 
+      // ✅ Dynamically import only in the browser
+      const html2pdf = (await import("html2pdf.js")).default;
+
       const opt = {
         margin: 0.5,
         filename: `${resume.resumeName || "resume"}.pdf`,
@@ -57,7 +59,6 @@ export function ResumeCard({ resume }) {
         jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
       };
 
-      // Render hidden resume preview and generate PDF
       await html2pdf().from(resumeRef.current).set(opt).save();
     } catch (err) {
       console.error("Failed to download PDF:", err);
