@@ -35,7 +35,7 @@ import axios from "axios";
 import { Eye } from "lucide-react";
 import { ResumePreview } from "./resume-preview";
 
-export function ResumeCard({ resume }) {
+export function ResumeCard({ resume, onDelete }) {
   const router = useRouter();
   console.log("resume", resume);
 
@@ -73,7 +73,7 @@ export function ResumeCard({ resume }) {
       if (res.data.success) {
         toast.success("Your resume has been deleted successfully.");
         setShowDeleteDialog(false);
-        router.push("/dashboard");
+        onDelete(resume._id);
       } else {
         toast.error("Failed to delete resume.");
       }

@@ -30,6 +30,10 @@ export default function ResumesPage() {
     fetchResumes();
   }, []);
 
+  const handleResumeDeleted = (deletedId) => {
+    setResumes((prev) => prev.filter((r) => r._id !== deletedId));
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
@@ -55,7 +59,11 @@ export default function ResumesPage() {
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {resumes.map((resume) => (
-          <ResumeCard key={resume._id} resume={resume} />
+          <ResumeCard
+            key={resume._id}
+            resume={resume}
+            onDelete={handleResumeDeleted}
+          />
         ))}
         <Link href="/dashboard/templates" className="block h-full">
           <div className="flex h-full flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center transition-colors hover:bg-muted/50">

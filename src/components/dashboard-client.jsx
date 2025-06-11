@@ -36,6 +36,11 @@ export default function DashboardClient() {
     fetchResumes();
   }, []);
 
+  // ✅ Remove resume from state after deletion
+  const handleResumeDeleted = (deletedId) => {
+    setResumes((prev) => prev.filter((r) => r._id !== deletedId));
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
@@ -98,7 +103,11 @@ export default function DashboardClient() {
         <h2 className="text-2xl font-bold">Your Resumes</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {resumes.map((resume) => (
-            <ResumeCard key={resume._id} resume={resume} />
+            <ResumeCard
+              key={resume._id}
+              resume={resume}
+              onDelete={handleResumeDeleted}
+            />
           ))}
           <Link href="/dashboard/templates" className="block h-full">
             <Card className="flex h-full flex-col items-center justify-center p-6 transition-colors hover:bg-muted/50">
