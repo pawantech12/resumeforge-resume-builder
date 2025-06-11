@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Download, Eye, Loader2, Save } from "lucide-react";
 import { useRef } from "react";
-import html2pdf from "html2pdf.js";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -71,6 +70,15 @@ export default function EditResumePage() {
       certifications: "",
     },
   });
+
+  // Modal form
+  const {
+    register: modalRegister,
+    handleSubmit: handleModalSubmit,
+    formState: { errors: modalErrors },
+    reset: resetModalForm,
+  } = useForm();
+
   const {
     fields: educationFields,
     append: appendEducation,
@@ -162,6 +170,8 @@ export default function EditResumePage() {
   }, [params.id, setValue]);
 
   const onSubmit = async (data) => {
+    console.log("data", data);
+
     // Convert experience date strings to Date objects
     data.education = data.education.map((edu) => ({
       ...edu,
@@ -188,18 +198,26 @@ export default function EditResumePage() {
   // Watch all form data to send to preview in real-time
   const formData = watch();
 
-  const handleDownloadPDF = () => {
-    if (!resumeRef.current) return;
+  const handleDownloadPDF = async () => {
+    try {
+      if (!resumeRef.current) return;
 
-    const opt = {
-      margin: 0.5,
-      filename: `${formData.resumeName || "resume"}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-    };
+      // ✅ Dynamically import only in the browser
+      const html2pdf = (await import("html2pdf.js")).default;
 
-    html2pdf().from(resumeRef.current).set(opt).save();
+      const opt = {
+        margin: 0.5,
+        filename: `${resume.resumeName || "resume"}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+      };
+
+      await html2pdf().from(resumeRef.current).set(opt).save();
+    } catch (err) {
+      console.error("Failed to download PDF:", err);
+      toast.error("Failed to download resume PDF.");
+    }
   };
 
   const onPasswordSubmit = async ({ password, expiresAt }) => {
@@ -306,7 +324,12 @@ export default function EditResumePage() {
           <ResumePreview data={formData} template={formData.template} />
         </div>
       ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <form
+          onSubmit={handleSubmit(onSubmit, (err) => {
+            console.log("Validation errors:", err); // 👈 logs if submission blocked
+          })}
+          className="space-y-8"
+        >
           <Card className="p-6">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -606,32 +629,35 @@ export default function EditResumePage() {
             <DialogTitle>Set Password and Expiry</DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit(onPasswordSubmit)} className="space-y-4">
+          <form
+            onSubmit={handleModalSubmit(onPasswordSubmit)}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <Input
                 type="password"
                 placeholder="Set a strong password"
-                {...register("password", {
+                {...modalRegister("password", {
                   required: "Password is required",
                   minLength: { value: 6, message: "Minimum 6 characters" },
                 })}
               />
-              {errors.password && (
+              {modalErrors.password && (
                 <p className="text-sm text-red-500">
-                  {errors.password.message}
+                  {modalErrors.password.message}
                 </p>
               )}
 
               <Input
                 type="date"
-                {...register("expiresAt", {
+                {...modalRegister("expiresAt", {
                   required: "Expiry time is required",
                   valueAsDate: true,
                 })}
               />
-              {errors.expiresAt && (
+              {modalErrors.expiresAt && (
                 <p className="text-sm text-red-500">
-                  {errors.expiresAt.message}
+                  {modalErrors.expiresAt.message}
                 </p>
               )}
             </div>
@@ -642,7 +668,7 @@ export default function EditResumePage() {
                 variant="outline"
                 onClick={() => {
                   setIsModalOpen(false);
-                  reset();
+                  resetModalForm();
                 }}
               >
                 Cancel

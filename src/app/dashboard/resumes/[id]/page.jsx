@@ -20,16 +20,36 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResumePreview } from "@/components/resume-preview";
 import axios from "axios";
-import html2pdf from "html2pdf.js";
 import { LinkIcon } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+
+import { useForm } from "react-hook-form";
 
 export default function ResumePage() {
+  const {
+    register: modalRegister,
+    handleSubmit: handleModalSubmit,
+    formState: { errors: modalErrors, isSubmitting: isModalSubmitting },
+    reset: resetModalForm,
+  } = useForm();
+
   const params = useParams();
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [resumeData, setResumeData] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [shareLink, setShareLink] = useState(null);
+  const [expiresAt, setExpiresAt] = useState(null);
+
   const resumeRef = useRef();
   useEffect(() => {
     // Simulate fetching resume data
@@ -47,22 +67,44 @@ export default function ResumePage() {
         setIsLoading(false);
       }
     };
+    const fetchExistingShare = async () => {
+      try {
+        const res = await axios.get(`/api/share/${params.id}`);
+        if (res.data?.success) {
+          const link = `${window.location.origin}/shared/${res.data.share.shareId}`;
+          setShareLink(link);
+          setExpiresAt(res.data.share.expiresAt);
+        }
+      } catch (error) {
+        console.log("No existing share link or it expired.");
+      }
+    };
+
+    fetchExistingShare();
 
     fetchResumeData();
   }, [params.id]);
 
-  const handleDownloadPDF = () => {
-    if (!resumeRef.current) return;
+  const handleDownloadPDF = async () => {
+    try {
+      if (!resumeRef.current) return;
 
-    const opt = {
-      margin: 0.5,
-      filename: `${resumeData.resumeName || "resume"}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-    };
+      // ✅ Dynamically import only in the browser
+      const html2pdf = (await import("html2pdf.js")).default;
 
-    html2pdf().from(resumeRef.current).set(opt).save();
+      const opt = {
+        margin: 0.5,
+        filename: `${resume.resumeName || "resume"}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+      };
+
+      await html2pdf().from(resumeRef.current).set(opt).save();
+    } catch (err) {
+      console.error("Failed to download PDF:", err);
+      toast.error("Failed to download resume PDF.");
+    }
   };
 
   const handleDelete = async () => {
@@ -96,6 +138,27 @@ export default function ResumePage() {
       await navigator.clipboard.writeText(shareUrl);
 
       toast.success("Shareable link copied to clipboard.");
+    } catch (err) {
+      toast.error("Failed to generate shareable link.");
+      console.error(err);
+    }
+  };
+
+  const onPasswordSubmit = async ({ password, expiresAt }) => {
+    try {
+      const { data } = await axios.post(`/api/share`, {
+        resumeId: params.id,
+        expiresAt: new Date(expiresAt), // optional
+        password: password, // optional, could be added via modal
+      });
+
+      const generatedUrl = `${window.location.origin}/shared/${data.shareId}`;
+      setShareLink(generatedUrl);
+      setExpiresAt(data.expiresAt);
+      await navigator.clipboard.writeText(generatedUrl);
+
+      toast.success("Shareable link copied to clipboard.");
+      setIsModalOpen(false);
     } catch (err) {
       toast.error("Failed to generate shareable link.");
       console.error(err);
@@ -149,11 +212,27 @@ export default function ResumePage() {
           </Button>
           <Button
             variant="outline"
-            onClick={handleShareResume}
-            title="Generate shareable link"
+            onClick={() => {
+              if (shareLink && new Date() < new Date(expiresAt)) {
+                navigator.clipboard.writeText(shareLink);
+                toast.success("Link copied to clipboard.");
+              } else {
+                setIsModalOpen(true);
+              }
+            }}
+            disabled={isLoading}
+            title={
+              shareLink && new Date() < new Date(expiresAt)
+                ? "Copy Link"
+                : "Generate shareable link"
+            }
           >
             <LinkIcon className="h-4 w-4" />
-            Share
+            {isModalSubmitting
+              ? "Getting link..."
+              : shareLink && new Date() < new Date(expiresAt)
+              ? "Copy Link"
+              : "Share"}
           </Button>
         </div>
       </div>
@@ -164,6 +243,71 @@ export default function ResumePage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Set Password and Expiry</DialogTitle>
+          </DialogHeader>
+
+          <form
+            onSubmit={handleModalSubmit(onPasswordSubmit)}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Input
+                type="password"
+                placeholder="Set a strong password"
+                {...modalRegister("password", {
+                  required: "Password is required",
+                  minLength: { value: 6, message: "Minimum 6 characters" },
+                })}
+              />
+              {modalErrors.password && (
+                <p className="text-sm text-red-500">
+                  {modalErrors.password.message}
+                </p>
+              )}
+
+              <Input
+                type="date"
+                {...modalRegister("expiresAt", {
+                  required: "Expiry time is required",
+                  valueAsDate: true,
+                })}
+              />
+              {modalErrors.expiresAt && (
+                <p className="text-sm text-red-500">
+                  {modalErrors.expiresAt.message}
+                </p>
+              )}
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  resetModalForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isModalSubmitting}>
+                {isModalSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
