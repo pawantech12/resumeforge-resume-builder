@@ -20,7 +20,16 @@ export default function CreateResumePage() {
           Create New Resume
         </h1>
       </div>
-      <Suspense fallback={<div>Loading form...</div>}>
+      <Suspense
+        fallback={
+          <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+            <div className="text-center">
+              <div className="mx-auto h-16 w-16 animate-spin rounded-full border-b-2 border-t-2 border-emerald-500"></div>
+              <p className="mt-4 text-lg font-medium">Loading Resume Form...</p>
+            </div>
+          </div>
+        }
+      >
         <CreateResumeForm />
       </Suspense>
     </div>
