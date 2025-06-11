@@ -1,6 +1,6 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -76,9 +76,10 @@ export default function CreateResumePage() {
   });
 
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
-  const selectedTemplate = searchParams.get("template") || "default";
+  const selectedTemplate = useMemo(() => {
+    return searchParams.get("template") || "default";
+  }, [searchParams]);
 
   const onSubmit = async (data) => {
     data.template = selectedTemplate;
