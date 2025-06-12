@@ -75,7 +75,7 @@ export default function EditResumePage() {
   const {
     register: modalRegister,
     handleSubmit: handleModalSubmit,
-    formState: { errors: modalErrors },
+    formState: { errors: modalErrors, isSubmitting: isModalSubmitting },
     reset: resetModalForm,
   } = useForm();
 
@@ -106,6 +106,7 @@ export default function EditResumePage() {
   const resumeRef = useRef();
   // New state to toggle preview vs edit form
   const [showPreview, setShowPreview] = useState(false);
+  const [resumeData, setResumeData] = useState(null);
 
   useEffect(() => {
     const fetchResume = async () => {
@@ -134,6 +135,17 @@ export default function EditResumePage() {
               ? new Date(exp.endDate).toISOString().split("T")[0]
               : "",
           })) || [];
+
+        setResumeData({
+          resumeName: resume.resumeName,
+          template: resume.template,
+          personalInfo: resume.personalInfo,
+          education: formattedEducation,
+          experience: formattedExperience,
+          skills: resume.skills,
+          languages: resume.languages,
+          certifications: resume.certifications,
+        });
 
         // Populate form values
         reset({
@@ -207,7 +219,7 @@ export default function EditResumePage() {
 
       const opt = {
         margin: 0.5,
-        filename: `${resume.resumeName || "resume"}.pdf`,
+        filename: `${resumeData.resumeName || "resume"}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
@@ -673,10 +685,10 @@ export default function EditResumePage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
+              <Button type="submit" disabled={isModalSubmitting}>
+                {isModalSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Saving...
                   </>
                 ) : (

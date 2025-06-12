@@ -14,42 +14,42 @@ export default function TemplatesPage() {
       name: "Professional",
       description:
         "A clean and professional template suitable for corporate roles.",
-      thumbnail: "/placeholder.svg?height=400&width=300",
+      pdfUrl: "/pdf/professional.pdf",
     },
     {
       id: "2",
       name: "Modern",
       description:
         "A contemporary design with a fresh layout and modern typography.",
-      thumbnail: "/placeholder.svg?height=400&width=300",
+      pdfUrl: "/pdf/modern.pdf",
     },
     {
       id: "3",
       name: "Creative",
       description:
         "A bold and creative template perfect for design and creative roles.",
-      thumbnail: "/placeholder.svg?height=400&width=300",
+      pdfUrl: "/pdf/creative.pdf",
     },
     {
       id: "4",
       name: "Minimal",
       description:
         "A minimalist design focusing on content with clean typography.",
-      thumbnail: "/placeholder.svg?height=400&width=300",
+      pdfUrl: "/pdf/creative.pdf",
     },
     {
       id: "5",
       name: "Executive",
       description:
         "An elegant template designed for senior positions and executives.",
-      thumbnail: "/placeholder.svg?height=400&width=300",
+      pdfUrl: "/pdf/creative.pdf",
     },
     {
       id: "6",
       name: "Technical",
       description:
         "Optimized for technical roles with sections for skills and projects.",
-      thumbnail: "/placeholder.svg?height=400&width=300",
+      pdfUrl: "/pdf/creative.pdf",
     },
   ];
 

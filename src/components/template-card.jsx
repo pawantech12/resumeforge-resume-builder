@@ -1,4 +1,7 @@
+"use client";
+import dynamic from "next/dynamic";
 import Link from "next/link";
+
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +13,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+const PdfPreview = dynamic(() => import("@/components/scrollable-pdfpreview"), {
+  ssr: false,
+});
+
 export function TemplateCard({ template }) {
   return (
     <Card className="overflow-hidden">
@@ -17,13 +24,8 @@ export function TemplateCard({ template }) {
         <CardTitle>{template.name}</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="relative aspect-[3/4] overflow-hidden">
-          <Image
-            src={template.thumbnail || "/placeholder.svg"}
-            alt={template.name}
-            fill
-            className="object-cover transition-transform hover:scale-105"
-          />
+        <div className="overflow-hidden">
+          <PdfPreview fileUrl={template.pdfUrl} />
         </div>
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-2 p-4">

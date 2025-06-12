@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { useForm } from "react-hook-form";
+import { Loader2 } from "lucide-react";
 
 export default function ResumePage() {
   const {
@@ -94,7 +95,7 @@ export default function ResumePage() {
 
       const opt = {
         margin: 0.5,
-        filename: `${resume.resumeName || "resume"}.pdf`,
+        filename: `${resumeData.resumeName || "resume"}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
@@ -297,7 +298,7 @@ export default function ResumePage() {
               <Button type="submit" disabled={isModalSubmitting}>
                 {isModalSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className=" h-4 w-4 animate-spin" />
                     Saving...
                   </>
                 ) : (
